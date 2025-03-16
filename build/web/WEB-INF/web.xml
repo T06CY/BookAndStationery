@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://java.sun.com/xml/ns/javaee" version="3.1">
+    
+    <display-name>Payment System</display-name>
+
+    <!-- Servlet Configuration -->
+    <servlet>
+        <servlet-name>PaymentServlet</servlet-name>
+        <servlet-class>PaymentServlet</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>PaymentServlet</servlet-name>
+        <url-pattern>/processPayment</url-pattern>
+    </servlet-mapping>
+
+    <!-- Welcome Page -->
+    <welcome-file-list>
+        <welcome-file>index.jsp</welcome-file>
+    </welcome-file-list>
+
+</web-app>
