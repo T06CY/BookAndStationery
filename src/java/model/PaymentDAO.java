@@ -4,20 +4,31 @@
  */
 package model;
 
+import Service.DatabaseService;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class PaymentDAO {
-    private static final String URL = "jdbc:mysql://localhost:3306/paymentdb";
+    private static final String URL = "jdbc:mysql://localhost:3306/bookandstationery";
     private static final String USER = "root";  
     private static final String PASSWORD = "";  
+
+    public Connection getConnection() throws SQLException {
+        return DriverManager.getConnection(URL, USER, PASSWORD);
+    }
+
+    public void closeConnection(Connection conn) throws SQLException {
+        if (conn != null && !conn.isClosed()) {
+            conn.close();
+        }
+    }
 
     // Method to insert a payment record
     public void addPayment(Payment payment) {
         String query = "INSERT INTO payments (cardName, cardNumber, expiryDate, cvv) VALUES (?, ?, ?, ?)";
 
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+        try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
 
             stmt.setString(1, payment.getCardName());
@@ -37,7 +48,7 @@ public class PaymentDAO {
         List<Payment> payments = new ArrayList<>();
         String query = "SELECT * FROM payments";
 
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+        try (Connection conn = getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(query)) {
 
@@ -61,14 +72,14 @@ public class PaymentDAO {
     public void updatePayment(Payment payment) {
         String query = "UPDATE payments SET cardName=?, cardNumber=?, expiryDate=?, cvv=? WHERE id=?";
 
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+        try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
 
             stmt.setString(1, payment.getCardName());
             stmt.setString(2, payment.getCardNumber());
             stmt.setString(3, payment.getExpiryDate());
             stmt.setString(4, payment.getCvv());
-            stmt.setLong(6, payment.getId());
+            stmt.setLong(5, payment.getId());  // Fixed the wrong index (was 6, should be 5)
 
             stmt.executeUpdate();
             System.out.println("Payment updated successfully.");
@@ -81,7 +92,7 @@ public class PaymentDAO {
     public void deletePayment(long id) {
         String query = "DELETE FROM payments WHERE id=?";
 
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+        try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
 
             stmt.setLong(1, id);

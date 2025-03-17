@@ -13,7 +13,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
+            background-color: #000000;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -116,8 +116,74 @@
             background-color: #0056b3;
         }
     </style>
+    
+    <script src="https://pay.google.com/gp/p/js/pay.js" async></script>
+    <script>
+        const paymentRequest = {
+            apiVersion: 2,
+            apiVersionMinor: 0,
+            allowedPaymentMethods: [{
+                type: 'CARD',
+                parameters: {
+                    allowedAuthMethods: ['PAN_ONLY', 'CRYPTOGRAM_3DS'],
+                    allowedCardNetworks: ['MASTERCARD', 'VISA']
+                },
+                tokenizationSpecification: {
+                    type: 'PAYMENT_GATEWAY',
+                    parameters: {
+                        gateway: 'example', 
+                        gatewayMerchantId: 'your-gateway-merchant-id' 
+                    }
+                }
+            }],
+            merchantInfo: {
+                merchantId: 'BCR2DN4T76F2HESL',
+                merchantName: 'BookAndStationery'
+            },
+            transactionInfo: {
+                totalPriceStatus: 'FINAL',
+                totalPrice: '42.00', 
+                currencyCode: 'MYR', 
+                countryCode: 'MY'
+            },
+            shippingAddressRequired: true,
+            shippingOptionRequired: true,
+        };
+
+        function onGooglePayLoaded() {
+            const paymentsClient = new google.payments.api.PaymentsClient({ environment: 'TEST' });
+            paymentsClient.isReadyToPay(paymentRequest).then(function(response) {
+                if (response.result) {
+                    const button = paymentsClient.createButton({
+                        onClick: () => onGooglePayButtonClicked(paymentsClient)
+                    });
+                    document.getElementById('container').appendChild(button);
+                }
+            }).catch(function(err) {
+                console.error('Error checking readiness to pay: ', err);
+            });
+        }
+
+        function onGooglePayButtonClicked(paymentsClient) {
+            paymentsClient.loadPaymentData(paymentRequest)
+                .then(function(paymentData) {
+                    // Send payment data to server
+                    fetch('GooglePayServlet', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(paymentData)
+                    })
+                    .then(response => response.text())
+                    .then(result => alert('Payment Successful: ' + result))
+                    .catch(error => console.error('Payment Error: ', error));
+                })
+                .catch(function(err) {
+                    console.error('Error loading payment data: ', err);
+                });
+        }
+    </script>
 </head>
-<body>
+<body onload="onGooglePayLoaded()">
 
 <div class="container">
     <h2>Select a payment method</h2>
@@ -136,9 +202,7 @@
 
         <h2>E-wallet</h2>
         <div class="payment-option">
-            <a href="gpayPayment.jsp">
-                <img src="images/google_pay.jpg" alt="Google Pay">
-            </a>
+            <div id="container"></div>
         </div>
 
     </div>
@@ -153,10 +217,10 @@
             <input type="text" id="visaName" name="visaName" required>
 
             <label for="visaNumber">Card Number (16 digits):</label>
-            <input type="text" id="visaNumber" name="visaNumber" maxlength="16" required>
+            <input type="text" id="visaNumber" name="visaNumber" maxlength="19" required>
 
             <label for="visaExpiry">Expiry Date (MM/YY):</label>
-            <input type="text" id="visaExpiry" name="visaExpiry" placeholder="MM/YY" required>
+            <input type="text" id="visaExpiry" name="visaExpiry" maxlength="5" placeholder="MM/YY" required>
 
             <label for="visaCVV">CVV (Security Code):</label>
             <input type="number" id="visaCVV" name="visaCVV" maxlength="3" required>
@@ -175,10 +239,10 @@
             <input type="text" id="masterName" name="masterName" required>
 
             <label for="masterNumber">Card Number (16 digits):</label>
-            <input type="text" id="masterNumber" name="masterNumber" maxlength="16" required>
+            <input type="text" id="masterNumber" name="masterNumber" maxlength="19" required>
 
             <label for="masterExpiry">Expiry Date (MM/YY):</label>
-            <input type="text" id="masterExpiry" name="masterExpiry" placeholder="MM/YY" required>
+            <input type="text" id="masterExpiry" name="masterExpiry" maxlength="5" placeholder="MM/YY" required>
 
             <label for="masterCVV">CVV (Security Code):</label>
             <input type="number" id="masterCVV" name="masterCVV" maxlength="3" required>
@@ -218,10 +282,51 @@
             masterModal.style.display = "none";
         }
     }
+
+    // Format Card Number with spaces every 4 digits
+    function formatCardNumber(input) {
+        let value = input.value.replace(/\D/g, '');
+        input.value = value.match(/.{1,4}/g)?.join(' ') || '';
+    }
+
+    document.getElementById('visaNumber').addEventListener('input', function() {
+        formatCardNumber(this);
+    });
+
+    document.getElementById('masterNumber').addEventListener('input', function() {
+        formatCardNumber(this);
+    });
+
+    // Automatically insert "/" in Expiry Date field
+    function formatExpiryDate(input) {
+        let value = input.value.replace(/\D/g, '');
+        if (value.length >= 2) {
+            input.value = value.slice(0, 2) + '/' + value.slice(2, 4);
+        } else {
+            input.value = value;
+        }
+    }
+
+    document.getElementById('visaExpiry').addEventListener('input', function() {
+        formatExpiryDate(this);
+    });
+
+    document.getElementById('masterExpiry').addEventListener('input', function() {
+        formatExpiryDate(this);
+    });
+
+    // Allow only 3 digits for CVV
+    function restrictCVV(input) {
+        input.value = input.value.replace(/\D/g, '').slice(0, 3);
+    }
+
+    document.getElementById('visaCVV').addEventListener('input', function() {
+        restrictCVV(this);
+    });
+
+    document.getElementById('masterCVV').addEventListener('input', function() {
+        restrictCVV(this);
+    });
 </script>
-
-</body>
-</html>
-
 </body>
 </html>

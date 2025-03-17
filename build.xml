@@ -67,5 +67,23 @@
     properties which you can use check the target you are overriding in 
     nbproject/build-impl.xml file. 
 
+    <target name="-pre-compile">
+        <mkdir dir="web/WEB-INF/lib/"/>
+            <copy todir="web/WEB-INF/lib">
+        <fileset dir="lib" includes="**/*.jar"/>
+      </copy>
+    </target>
+
+    <path id="lib.classpath">
+       <fileset dir="lib">
+           <include name="bcrypt-0.4.jar"/>
+       </fileset>
+    </path>
+
+    <target name="compile">
+        <javac srcdir="src" destdir="build" classpathref="lib.classpath"/>
+    </target>
+
+
     -->
 </project>
